@@ -44,11 +44,15 @@ const submithandler = (event) => {
   spinnerSearchEl.classList.add("spinner--visible");
   spinnerJobDetailsEl.classList.add("spinner--visible");
 
-  const url = fetch("data.json");
+  const url = fetch(
+    `https://bytegrad.com/course-assets/js/2/api/jobs?search=${searchboxtext}`
+  );
   url
     .then((res) => res.json())
     .then((data) => {
       console.log(data.jobItems);
+      spinnerSearchEl.classList.remove("spinner--visible");
+      spinnerSearchEl.classList.add("spinner--hidden");
     })
     .catch((error) => {
       console.error("erorr : ", error);
