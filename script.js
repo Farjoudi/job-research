@@ -30,8 +30,8 @@ const spinnerJobDetailsEl = document.querySelector(".spinner--job-details");
 const submithandler = (event) => {
   event.preventDefault();
   const searchboxtext = searchInputEl.value;
-  const forbiddenpattern = /amin/;
-  const patternmatch = forbiddenpattern.test(searchtext);
+  const forbiddenpattern = /[0-9]/;
+  const patternmatch = forbiddenpattern.test(searchboxtext);
   if (patternmatch) {
     errorTextEl.textContent = "your search may not contain ...";
     errorEl.classList.add("error--visible");
@@ -39,5 +39,19 @@ const submithandler = (event) => {
       errorEl.classList.remove("error--visible");
     }, 3000);
   }
+
+  searchInputEl.blur();
+  spinnerSearchEl.classList.add("spinner--visible");
+  spinnerJobDetailsEl.classList.add("spinner--visible");
+
+  const url = fetch("data.json");
+  url
+    .then((res) => res.json())
+    .then((data) => {
+      console.log(data.jobItems);
+    })
+    .catch((error) => {
+      console.error("erorr : ", error);
+    });
 };
 searchFormEl.addEventListener("submit", submithandler);
