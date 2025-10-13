@@ -29,6 +29,7 @@ const spinnerJobDetailsEl = document.querySelector(".spinner--job-details");
 // SEARCH COMPONENT
 const submithandler = (event) => {
   event.preventDefault();
+  jobListSearchEl.innerHTML = "";
   const searchboxtext = searchInputEl.value;
   const forbiddenpattern = /[0-9]/;
   const patternmatch = forbiddenpattern.test(searchboxtext);
@@ -57,27 +58,30 @@ const submithandler = (event) => {
       const { jobItems } = data;
       numberEl.textContent = jobItems.length;
 
-      const jobitem = `
+      jobItems.slice(0, 7).forEach((jobitem) => {
+        const jobitemHtml = `
         
          <li class="job-item">
-                        <a class="job-item__link" href="435243523542435">
-                            <div class="job-item__badge">LO</div>
+                        <a class="job-item__link" href="${jobitem.id}">
+                            <div class="job-item__badge">${jobitem.badgeLetters}</div>
                             <div class="job-item__middle">
-                                <h3 class="third-heading">Full-Stack Developer</h3>
-                                <p class="job-item__company">LakeOperations</p>
+                                <h3 class="third-heading">${jobitem.title}</h3>
+                                <p class="job-item__company">${jobitem.company}</p>
                                 <div class="job-item__extras">
-                                    <p class="job-item__extra"><i class="fa-solid fa-clock job-item__extra-icon"></i> Full-Time</p>
-                                    <p class="job-item__extra"><i class="fa-solid fa-money-bill job-item__extra-icon"></i> $80,000+</p>
-                                    <p class="job-item__extra"><i class="fa-solid fa-location-dot job-item__extra-icon"></i> Global</p>
+                                    <p class="job-item__extra"><i class="fa-solid fa-clock job-item__extra-icon"></i>${jobitem.duration}</p>
+                                    <p class="job-item__extra"><i class="fa-solid fa-money-bill job-item__extra-icon"></i> ${jobitem.salary}</p>
+                                    <p class="job-item__extra"><i class="fa-solid fa-location-dot job-item__extra-icon"></i>${jobitem.location}</p>
                                 </div>
                             </div>
                             <div class="job-item__right">
                                 <i class="fa-solid fa-bookmark job-item__bookmark-icon"></i>
-                                <time class="job-item__time">1d</time>
+                                <time class="job-item__time">${jobitem.daysAgo}d</time>
                             </div>
                         </a>
                     </li>
         `;
+        jobListSearchEl.insertAdjacentHTML("beforeend", jobitemHtml);
+      });
     })
     .catch((error) => {
       console.error("erorr : ", error);
