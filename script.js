@@ -53,6 +53,31 @@ const submithandler = (event) => {
       console.log(data.jobItems);
       spinnerSearchEl.classList.remove("spinner--visible");
       spinnerSearchEl.classList.add("spinner--hidden");
+
+      const { jobItems } = data;
+      numberEl.textContent = jobItems.length;
+
+      const jobitem = `
+        
+         <li class="job-item">
+                        <a class="job-item__link" href="435243523542435">
+                            <div class="job-item__badge">LO</div>
+                            <div class="job-item__middle">
+                                <h3 class="third-heading">Full-Stack Developer</h3>
+                                <p class="job-item__company">LakeOperations</p>
+                                <div class="job-item__extras">
+                                    <p class="job-item__extra"><i class="fa-solid fa-clock job-item__extra-icon"></i> Full-Time</p>
+                                    <p class="job-item__extra"><i class="fa-solid fa-money-bill job-item__extra-icon"></i> $80,000+</p>
+                                    <p class="job-item__extra"><i class="fa-solid fa-location-dot job-item__extra-icon"></i> Global</p>
+                                </div>
+                            </div>
+                            <div class="job-item__right">
+                                <i class="fa-solid fa-bookmark job-item__bookmark-icon"></i>
+                                <time class="job-item__time">1d</time>
+                            </div>
+                        </a>
+                    </li>
+        `;
     })
     .catch((error) => {
       console.error("erorr : ", error);
