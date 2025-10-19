@@ -26,158 +26,171 @@ const sortingBtnRecentEl = document.querySelector(".sorting__button--recent");
 const spinnerSearchEl = document.querySelector(".spinner--search");
 const spinnerJobDetailsEl = document.querySelector(".spinner--job-details");
 
-// SEARCH COMPONENT
-const submithandler = (event) => {
+// ✅ SEARCH COMPONENT (async version)
+const submithandler = async (event) => {
   event.preventDefault();
   jobListSearchEl.innerHTML = "";
-  const searchboxtext = searchInputEl.value;
+
+  const searchboxtext = searchInputEl.value.trim();
   const forbiddenpattern = /[0-9]/;
-  const patternmatch = forbiddenpattern.test(searchboxtext);
-  if (patternmatch) {
-    errorTextEl.textContent = "your search may not contain ...";
+
+  if (forbiddenpattern.test(searchboxtext)) {
+    errorTextEl.textContent = "your search may not contain numbers.";
     errorEl.classList.add("error--visible");
-    setTimeout(() => {
-      errorEl.classList.remove("error--visible");
-    }, 3000);
+    setTimeout(() => errorEl.classList.remove("error--visible"), 3000);
+    return;
   }
 
   searchInputEl.blur();
   spinnerSearchEl.classList.add("spinner--visible");
 
-  const url = fetch(
-    `https://bytegrad.com/course-assets/js/2/api/jobs?search=${searchboxtext}`
-  );
-  url
-    .then((res) => res.json())
-    .then((data) => {
-      spinnerSearchEl.classList.remove("spinner--visible");
-      spinnerSearchEl.classList.add("spinner--hidden");
+  try {
+    const response = await fetch(
+      `https://bytegrad.com/course-assets/js/2/api/jobs?search=${searchboxtext}`
+    );
 
-      const { jobItems } = data;
-      numberEl.textContent = jobItems.length;
+    if (!response.ok) throw new Error("Network response was not ok");
 
-      jobItems.slice(0, 7).forEach((jobitem) => {
-        const jobitemHtml = `
-        
-         <li class="job-item">
-                        <a class="job-item__link" href="${jobitem.id}">
-                            <div class="job-item__badge">${jobitem.badgeLetters}</div>
-                            <div class="job-item__middle">
-                                <h3 class="third-heading">${jobitem.title}</h3>
-                                <p class="job-item__company">${jobitem.company}</p>
-                                <div class="job-item__extras">
-                                    <p class="job-item__extra"><i class="fa-solid fa-clock job-item__extra-icon"></i>${jobitem.duration}</p>
-                                    <p class="job-item__extra"><i class="fa-solid fa-money-bill job-item__extra-icon"></i> ${jobitem.salary}</p>
-                                    <p class="job-item__extra"><i class="fa-solid fa-location-dot job-item__extra-icon"></i>${jobitem.location}</p>
-                                </div>
-                            </div>
-                            <div class="job-item__right">
-                                <i class="fa-solid fa-bookmark job-item__bookmark-icon"></i>
-                                <time class="job-item__time">${jobitem.daysAgo}d</time>
-                            </div>
-                        </a>
-                    </li>
-        `;
-        jobListSearchEl.insertAdjacentHTML("beforeend", jobitemHtml);
-      });
-    })
-    .catch((error) => {
-      console.error("erorr : ", error);
+    const data = await response.json();
+    const { jobItems } = data;
+
+    numberEl.textContent = jobItems.length;
+    spinnerSearchEl.classList.remove("spinner--visible");
+    spinnerSearchEl.classList.add("spinner--hidden");
+
+    jobItems.slice(0, 7).forEach((jobitem) => {
+      const jobitemHtml = `
+        <li class="job-item">
+          <a class="job-item__link" href="${jobitem.id}">
+              <div class="job-item__badge">${jobitem.badgeLetters}</div>
+              <div class="job-item__middle">
+                  <h3 class="third-heading">${jobitem.title}</h3>
+                  <p class="job-item__company">${jobitem.company}</p>
+                  <div class="job-item__extras">
+                      <p class="job-item__extra"><i class="fa-solid fa-clock job-item__extra-icon"></i>${jobitem.duration}</p>
+                      <p class="job-item__extra"><i class="fa-solid fa-money-bill job-item__extra-icon"></i>${jobitem.salary}</p>
+                      <p class="job-item__extra"><i class="fa-solid fa-location-dot job-item__extra-icon"></i>${jobitem.location}</p>
+                  </div>
+              </div>
+              <div class="job-item__right">
+                  <i class="fa-solid fa-bookmark job-item__bookmark-icon"></i>
+                  <time class="job-item__time">${jobitem.daysAgo}d</time>
+              </div>
+          </a>
+        </li>`;
+      jobListSearchEl.insertAdjacentHTML("beforeend", jobitemHtml);
     });
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
+    errorTextEl.textContent = "Failed to load jobs. Please try again later.";
+    errorEl.classList.add("error--visible");
+    setTimeout(() => errorEl.classList.remove("error--visible"), 3000);
+  }
 };
+
 searchFormEl.addEventListener("submit", submithandler);
 
-const clickhandler = (event) => {
+// ✅ JOB DETAILS COMPONENT (async version)
+const clickhandler = async (event) => {
   event.preventDefault();
   const jobItemEl = event.target.closest(".job-item");
+  if (!jobItemEl) return;
+
   document
     .querySelector(".job-item--active")
     ?.classList.remove("job-item--active");
   jobItemEl.classList.add("job-item--active");
 
   jobDetailsContentEl.innerHTML = "";
-  const jobid = jobItemEl.children[0].getAttribute("href");
-  fetch("https://bytegrad.com/course-assets/js/2/api/jobs/" + jobid)
-    .then((res) => {
-      if (!res.ok) {
-        console.log("wrong ast ");
-        return;
-      }
-      return res.json();
-    })
-    .then((data) => {
-      console.log(data);
+  spinnerJobDetailsEl.classList.add("spinner--visible");
 
-      const { jobItem } = data;
-      spinnerJobDetailsEl.classList.remove("spinner--visible");
-      const details = `
+  const jobid = jobItemEl.querySelector("a").getAttribute("href");
+
+  try {
+    const res = await fetch(
+      `https://bytegrad.com/course-assets/js/2/api/jobs/${jobid}`
+    );
+    if (!res.ok) throw new Error("Failed to fetch job details");
+
+    const data = await res.json();
+    const { jobItem } = data;
+
+    spinnerJobDetailsEl.classList.remove("spinner--visible");
+
+    const details = `
       <img src="${jobItem.coverImgURL}" alt="#" class="job-details__cover-img">
 
-<a class="apply-btn" href="${
-        jobItem.companyURL
-      }" target="_blank">Apply <i class="fa-solid fa-square-arrow-up-right apply-btn__icon"></i></a>
+      <a class="apply-btn" href="${jobItem.companyURL}" target="_blank">
+        Apply <i class="fa-solid fa-square-arrow-up-right apply-btn__icon"></i>
+      </a>
 
-<section class="job-info">
-    <div class="job-info__left">
-        <div class="job-info__badge">${jobItem.badgeLetters}</div>
-        <div class="job-info__below-badge">
-            <time class="job-info__time">${jobItem.daysAgo}d</time>
-            <button class="job-info__bookmark-btn">
-                <i class="fa-solid fa-bookmark job-info__bookmark-icon"></i>
-            </button>
+      <section class="job-info">
+        <div class="job-info__left">
+          <div class="job-info__badge">${jobItem.badgeLetters}</div>
+          <div class="job-info__below-badge">
+              <time class="job-info__time">${jobItem.daysAgo}d</time>
+              <button class="job-info__bookmark-btn">
+                  <i class="fa-solid fa-bookmark job-info__bookmark-icon"></i>
+              </button>
+          </div>
         </div>
-    </div>
-    <div class="job-info__right">
-        <h2 class="second-heading">${jobItem.title}</h2>
-        <p class="job-info__company">${jobItem.company}</p>
-        <p class="job-info__description">${jobItem.description}</p>
-        <div class="job-info__extras">
-            <p class="job-info__extra"><i class="fa-solid fa-clock job-info__extra-icon"></i>${
-              jobItem.duration
-            }</p>
-            <p class="job-info__extra"><i class="fa-solid fa-money-bill job-info__extra-icon"></i> $${
-              jobItem.salary
-            }+</p>
-            <p class="job-info__extra"><i class="fa-solid fa-location-dot job-info__extra-icon"></i> ${
-              jobItem.location
-            }</p>
+        <div class="job-info__right">
+          <h2 class="second-heading">${jobItem.title}</h2>
+          <p class="job-info__company">${jobItem.company}</p>
+          <p class="job-info__description">${jobItem.description}</p>
+          <div class="job-info__extras">
+              <p class="job-info__extra"><i class="fa-solid fa-clock job-info__extra-icon"></i>${
+                jobItem.duration
+              }</p>
+              <p class="job-info__extra"><i class="fa-solid fa-money-bill job-info__extra-icon"></i> $${
+                jobItem.salary
+              }+</p>
+              <p class="job-info__extra"><i class="fa-solid fa-location-dot job-info__extra-icon"></i>${
+                jobItem.location
+              }</p>
+          </div>
         </div>
-    </div>
-</section>
+      </section>
 
-<div class="job-details__other">
-    <section class="qualifications">
-        <div class="qualifications__left">
+      <div class="job-details__other">
+        <section class="qualifications">
+          <div class="qualifications__left">
             <h4 class="fourth-heading">Qualifications</h4>
             <p class="qualifications__sub-text">Other qualifications may apply</p>
-        </div>
-        <ul class="qualifications__list">
-             ${jobItem.qualifications
-               .map((qu) => `<li class="qualifications__item">${qu}</li>`)
-               .join("")}
-        </ul>
-    </section>
+          </div>
+          <ul class="qualifications__list">
+            ${jobItem.qualifications
+              .map((qu) => `<li class="qualifications__item">${qu}</li>`)
+              .join("")}
+          </ul>
+        </section>
 
-    <section class="reviews">
-        <div class="reviews__left">
+        <section class="reviews">
+          <div class="reviews__left">
             <h4 class="fourth-heading">Company reviews</h4>
             <p class="reviews__sub-text">Recent things people are saying</p>
-        </div>
-        <ul class="reviews__list">
-         ${jobItem.reviews
-           .map((re) => `<li class="reviews__item">${re}</li>`)
-           .join("")}
-         
-            
-        </ul>
-    </section>
-</div>
+          </div>
+          <ul class="reviews__list">
+            ${jobItem.reviews
+              .map((re) => `<li class="reviews__item">${re}</li>`)
+              .join("")}
+          </ul>
+        </section>
+      </div>
 
-<footer class="job-details__footer">
-    <p class="job-details__footer-text">If possible, please reference that you found the job on <span class="u-bold">rmtDev</span>, we would really appreciate it!</p>
-</footer>`;
-      jobDetailsContentEl.innerHTML = details;
-    })
-    .catch((err) => console.log(err));
+      <footer class="job-details__footer">
+        <p class="job-details__footer-text">
+          If possible, please reference that you found the job on 
+          <span class="u-bold">rmtDev</span>, we would really appreciate it!
+        </p>
+      </footer>`;
+
+    jobDetailsContentEl.innerHTML = details;
+  } catch (err) {
+    console.error("Error fetching job details:", err);
+    spinnerJobDetailsEl.classList.remove("spinner--visible");
+    jobDetailsContentEl.innerHTML = `<p class="error__text">Failed to load job details.</p>`;
+  }
 };
+
 jobListSearchEl.addEventListener("click", clickhandler);
